@@ -1,5 +1,11 @@
 FROM bentou/ubuntuxenialbazel
 
+# Based on https://github.com/tensorflow/tensorflow/tree/master/tensorflow/tools/docker
+# Based on https://github.com/docker-library/golang/tree/master/1.7
+
+# maintener info
+MAINTAINER Lukasz Pyrzyk <lukasz.pyrzyk@gmail.com>, Jakub Bentkowski <bentkowski.jakub@gmail.com>
+
 # Download and build TensorFlow.
 
 RUN git clone https://github.com/tensorflow/tensorflow.git && \
@@ -7,25 +13,14 @@ RUN git clone https://github.com/tensorflow/tensorflow.git && \
     git checkout r0.11
 WORKDIR /tensorflow
 
-# TODO(craigcitro): Don't install the pip package, since it makes it
-# more difficult to experiment with local changes. Instead, just add
-# the built directory to the path.
-
 RUN apt-get update && apt-get install -y swig
 
-#RUN tensorflow/tools/ci_build/builds/configured CPU
 RUN ./configure
 RUN bazel build -c opt //tensorflow:libtensorflow.so
 
-#RUN tensorflow/tools/ci_build/builds/configured CPU \
-#    bazel build -c opt tensorflow/tools/pip_package:build_pip_package && \
-#    bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/pip && \
-#    pip install --upgrade /tmp/pip/tensorflow-*.whl && \
-#    rm -rf /tmp/pip && \
-#    rm -rf /root/.cache
-# Clean up pip wheel and Bazel cache when done.
-
 RUN cp bazel-bin/tensorflow/libtensorflow.so /usr/local/lib
+
+# Download and install go
 
 ENV GOLANG_VERSION 1.7.3
 ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
@@ -44,3 +39,5 @@ WORKDIR $GOPATH
 
 COPY go-wrapper /usr/local/bin/
 
+WORKDIR /tensorflow
+RUN echo $(git rev-parse HEAD)
